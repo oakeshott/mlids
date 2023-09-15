@@ -1,0 +1,101 @@
+#cloud-config
+autoinstall:
+  version: 1
+  refresh-installer:  # start with an up-to-date installer
+  update: yes
+  # interactive-sections:  # Install groups listed here will wait for user input
+  #   - storage
+  storage:  # should set the interactive default but doesn't seem to work??
+    layout:
+      name: direct
+  locale: ja_JP.UTF-8
+  timezone: Asia/Tokyo
+  keyboard:
+    layout: us
+  identity:  # This is section you may want to add to interactive-sections  (user name and password are ubuntu here)
+    hostname: server
+    password: "$6$9607e242705fd3cd$XDNJOi4c1/I7PV8BZ0duBDhYSvIfxGM2LODugF31mSkI9osgPyGRLTJqfc.GyjCcBE0wwrAGCw/62Vu/DKw1x/"
+    username: ubuntu
+  ssh:
+    allow-pw: true
+    install-server: true
+  package_update: true
+  package_upgrade: true
+  late-commands:
+    - |
+      cat <<EOF | sudo tee /target/etc/bcc-installer.sh
+      #/bin/sh
+      cd /usr/src
+      sudo git clone https://github.com/iovisor/bcc.git -b v0.25.0
+      sudo mkdir -p /usr/src/bcc/build
+      cd /usr/src/bcc/build
+      sudo cmake ..
+      # sudo cmake .. -DCMAKE_PREFIX_PATH=/usr/lib/llvm-12
+      sudo make -j8
+      sudo make install
+      sudo cmake -DPYTHON_CMD=python3 ..
+      sudo pushd src/python/
+      sudo make -j8
+      sudo make install
+      EOF
+    - |
+      cat <<EOF | sudo tee /target/etc/pyenv.sh
+      #!/usr/bin/env bash
+      git clone https://github.com/pyenv/pyenv ~/.pyenv
+      echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
+      echo 'command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
+      echo 'eval "$(pyenv init -)"' >> ~/.bashrc
+      echo 'export PYTHONPATH=${PYTHONPATH}:${HOME}/.pyenv/versions/3.9.11/lib/python3.9/site-packages:/usr/lib/python3/dist-packages/' >> ~/.bashrc
+      pyenv install 3.9.15
+      pyenv global 3.9.15
+      pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu
+      pip install sklearn numpy pyroute2
+      EOF
+    - |
+      cat <<EOF | sudo tee /target/etc/bootstrap.sh
+      #!/usr/bin/env bash
+      echo *************************
+      echo ****  Finish Setup   ****
+      echo ************************* 
+      # echo 'Enter the hostname for this system: '
+      # read NEW_HOSTNAME
+      # hostnamectl set-hostname \${NEW_HOSTNAME}
+      sudo timedatectl set-timezone Asia/Tokyo
+      echo *************************
+      echo *      Apt install      *
+      echo *************************
+      TZ=Asia/Tokyo
+      ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+      DEBIAN_FRONTEND=noninteractive
+      sudo apt update -y
+      sudo apt install linux-image-5.15.0-52-generic linux-headers-5.15.0-52-generic linux-modules-extra-5.15.0-52-generic
+      sudo apt install -y wget openssh-server golang iperf3 jq netperf arping mpstat sysstat
+      sudo apt install -y bison build-essential cmake flex git libedit-dev \
+        libllvm12 llvm-12-dev libclang-12-dev python zlib1g-dev libelf-dev libfl-dev python3-distutils \
+        linux-headers-\$(uname -r)
+      sudo apt install -y apt-transport-https ca-certificates curl software-properties-common gnupg2
+      sudo apt install -y \
+        build-essential libssl-dev zlib1g-dev \
+        libbz2-dev libreadline-dev libsqlite3-dev curl llvm \
+        libncursesw5-dev tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev \
+        libopencv-dev git
+      # sudo add-apt-repository ppa:deadsnakes/ppa
+      # sudo apt install -y python3.9
+      EOF
+    - curtin in-target --target /target chmod 744 /etc/bootstrap.sh
+    # - curtin in-target --target /target chmod 755 /etc/pyenv.sh
+    # - curtin in-target --target /target cp /etc/bootstrap.sh /etc/bootstrap.sh
+  user-data: # Commands here run during first boot (cannot be interactive)
+    runcmd:
+      # Install the NVIDIA driver from the ppa we setup earlier
+      # - [apt, install, --yes,  nvidia-driver-470, --no-install-recommends]
+      - [/bin/bash, /etc/bootstrap.sh]
+      - |
+        echo ''
+        echo '***************************************'
+        echo ' To complete install setup please run, '
+        echo ' sudo passwd root'
+        echo ' sudo /etc/bootstrap.sh'
+        echo '***************************************'
+        echo ''
+
