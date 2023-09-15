@@ -7,7 +7,7 @@ from tqdm import tqdm
 curdir = os.path.dirname(__file__)
 
 USERNAME        = 't-hara'
-IF              = 'enp108s0'
+TESTER_IFNAME   = 'enp108s0'
 TESTER          = f'{USERNAME}@163.221.216.240'
 IFNAME          = 'eno12409'
 RESDIR          = f'{curdir}/results'
@@ -99,7 +99,7 @@ def experiment(pkt_sending_interval, mode, ML_NAME, NUM_THREADS):
 
     time.sleep(1)
 
-    cmd = ['ssh', '-t', '-i', RSA_PRIVATE_KEY, TESTER, f'/home/{USERNAME}/measure-pps.sh', IF, str(TIME)]
+    cmd = ['ssh', '-t', '-i', RSA_PRIVATE_KEY, TESTER, f'/home/{USERNAME}/measure-pps.sh', TESTER_IFNAME, str(TIME)]
     # cmd = ['ssh', '-t', '-i', RSA_PRIVATE_KEY, TESTER, '/home/t-hara/txpps.sh', "/home/t-hara/" + LOGDIR, str(TIME)]
     sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
 
