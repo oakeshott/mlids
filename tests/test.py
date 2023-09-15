@@ -6,22 +6,15 @@ from tqdm import tqdm
 
 curdir = os.path.dirname(__file__)
 
-TESTER   = 't-hara@163.221.216.240'
-IFNAME   = 'eno12409'
-RESDIR = f'{curdir}/results'
-RSA_PRIVATE_KEY = '/home/t-hara/.ssh/id_rsa'
-FLAGS = {
-        'af_xdp': ['-M', 'COMBINED'],
-        'af_xdp-bp': ['-M', 'COMBINED', '-B'],
-        'af_xdp-poll': ['-M', 'COMBINED', '-p'],
-        # 'af_xdp': ['-M', 'AF_XDP'],
-        # 'af_xdp-bp': ['-M', 'AF_XDP', '-B'],
-        # 'af_xdp-poll': ['-M', 'AF_XDP', '-p'],
-        'xdp': ['-M', 'XDP'],
-        }
-TARGET_IP = '10.0.1.254'
-TIME = 100
-ML_NAMES = ['NN', 'DT', 'RF']
+USERNAME        = 't-hara'
+IF              = 'enp108s0'
+TESTER          = f'{USERNAME}@163.221.216.240'
+IFNAME          = 'eno12409'
+RESDIR          = f'{curdir}/results'
+RSA_PRIVATE_KEY = f'/home/{USERNAME}/.ssh/id_rsa'
+TARGET_IP       = '10.0.1.254'
+TIME            = 100
+ML_NAMES        = ['NN', 'DT', 'RF']
 
 def get_rcvd_pkts():
     cmd = ['pidof', APP_NAME]
@@ -106,18 +99,18 @@ def experiment(pkt_sending_interval, mode, ML_NAME, NUM_THREADS):
 
     time.sleep(1)
 
-    cmd = ['ssh', '-t', '-i', RSA_PRIVATE_KEY, TESTER, '/home/t-hara/measure-pps.sh', 'enp108s0', str(TIME)]
+    cmd = ['ssh', '-t', '-i', RSA_PRIVATE_KEY, TESTER, f'/home/{USERNAME}/measure-pps.sh', IF, str(TIME)]
     # cmd = ['ssh', '-t', '-i', RSA_PRIVATE_KEY, TESTER, '/home/t-hara/txpps.sh', "/home/t-hara/" + LOGDIR, str(TIME)]
     sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
 
     if mode == 'xdp_drv':
-        cmd = ['sudo', 'PYTHONIOENCODING=utf-8', 'PYTHONPATH=/home/t-hara/.pyenv/versions/3.9.11/lib/python3.9/site-packages:/usr/lib/python3/dist-packages/', 'python3.9', APP_PATH, IFNAME, LOGDIR, '-D']
+        cmd = ['sudo', 'PYTHONIOENCODING=utf-8', f'PYTHONPATH=/home/{USERNAME}/.pyenv/versions/3.9.11/lib/python3.9/site-packages:/usr/lib/python3/dist-packages/', f'/home/{USERNAME}/shims/python', APP_PATH, IFNAME, LOGDIR, '-D']
     elif mode == 'xdp_skb':
-        cmd = ['sudo', 'PYTHONIOENCODING=utf-8', 'PYTHONPATH=/home/t-hara/.pyenv/versions/3.9.11/lib/python3.9/site-packages:/usr/lib/python3/dist-packages/', 'python3.9', APP_PATH, IFNAME, LOGDIR, '-S']
+        cmd = ['sudo', 'PYTHONIOENCODING=utf-8', f'PYTHONPATH=/home/{USERNAME}/.pyenv/versions/3.9.11/lib/python3.9/site-packages:/usr/lib/python3/dist-packages/', f'/home/{USERNAME}/shims/python', APP_PATH, IFNAME, LOGDIR, '-S']
     elif mode == 'tc':
-        cmd = ['sudo', 'PYTHONIOENCODING=utf-8', 'PYTHONPATH=/home/t-hara/.pyenv/versions/3.9.11/lib/python3.9/site-packages:/usr/lib/python3/dist-packages/', 'python3.9', APP_PATH, IFNAME, LOGDIR]
+        cmd = ['sudo', 'PYTHONIOENCODING=utf-8', f'PYTHONPATH=/home/{USERNAME}/.pyenv/versions/3.9.11/lib/python3.9/site-packages:/usr/lib/python3/dist-packages/', f'/home/{USERNAME}/shims/python', APP_PATH, IFNAME, LOGDIR]
     else:
-        cmd = ['sudo', 'PYTHONIOENCODING=utf-8', 'PYTHONPATH=/home/t-hara/.pyenv/versions/3.9.11/lib/python3.9/site-packages:/usr/lib/python3/dist-packages/', 'python3.9', APP_PATH, IFNAME, LOGDIR]
+        cmd = ['sudo', 'PYTHONIOENCODING=utf-8', f'PYTHONPATH=/home/{USERNAME}/.pyenv/versions/3.9.11/lib/python3.9/site-packages:/usr/lib/python3/dist-packages/', f'/home/{USERNAME}/shims/python', APP_PATH, IFNAME, LOGDIR]
     app = subprocess.Popen(cmd)
     # app = subprocess.Popen(cmd,
     #         stderr=subprocess.DEVNULL)
@@ -153,9 +146,6 @@ def main():
     # list_pkt_sending_interval = [0]
     # modes = ['af_xdp', 'af_xdp-poll', 'af_xdp-bp', 'xdp']
     modes = ['xdp_drv', 'xdp_skb', 'tc', 'userspace']
-    modes = ['xdp_drv', 'xdp_skb', 'tc']
-    modes = ['xdp_drv']
-    modes = ['userspace']
     # ML_NAMES = ['nn']
     ML_NAMES = ['dt', 'rf', 'filter']
     ML_NAMES = ['nn']
