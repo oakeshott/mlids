@@ -29,8 +29,8 @@ autoinstall:
       sudo git clone https://github.com/iovisor/bcc.git -b v0.25.0
       sudo mkdir -p /usr/src/bcc/build
       cd /usr/src/bcc/build
-      sudo cmake ..
-      # sudo cmake .. -DCMAKE_PREFIX_PATH=/usr/lib/llvm-12
+      # sudo cmake ..
+      sudo cmake .. -DCMAKE_PREFIX_PATH=/usr/lib/llvm-12
       sudo make -j8
       sudo make install
       sudo cmake -DPYTHON_CMD=python3 ..
@@ -78,7 +78,7 @@ autoinstall:
         build-essential libssl-dev zlib1g-dev \
         libbz2-dev libreadline-dev libsqlite3-dev curl llvm \
         libncursesw5-dev tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev \
-        libopencv-dev git
+        libopencv-dev git hping3
       # sudo add-apt-repository ppa:deadsnakes/ppa
       # sudo apt install -y python3.9
       EOF
