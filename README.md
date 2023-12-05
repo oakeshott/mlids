@@ -1,5 +1,7 @@
 # README
 
+> [!NOTE]
+> The research achievement, encompassing this program, is currently submitting and under review.
 
 ## Setup
 
